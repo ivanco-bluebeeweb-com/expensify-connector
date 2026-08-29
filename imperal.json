@@ -1,0 +1,711 @@
+{
+  "manifest_schema_version": 3,
+  "sdk_version": "5.13.0",
+  "app_id": "expensify-connector",
+  "version": "0.1.0",
+  "name": "Expensify",
+  "description": "Connect your own Expensify account (Integration Server API -- bring your own partnerUserID/partnerUserSecret from expensify.com/tools/integrations) to read policies, employees, and expense reports, plus value-add spend reports. Policy-employee writes included; full report export requires a configured export template in Expensify's own UI.",
+  "icon": "icon.svg",
+  "actions_explicit": true,
+  "system": false,
+  "capabilities": [
+    "expensify:read",
+    "expensify:write"
+  ],
+  "tools": [
+    {
+      "name": "connect_expensify",
+      "description": "Connect your own Expensify account by saving your Integration Server partnerUserID/partnerUserSecret pair (from expensify.com/tools/integrations), after checking it actually works.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "create:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "partner_user_id": {
+            "default": "",
+            "description": "Your Expensify Integration Server partnerUserID.",
+            "title": "Partner User Id",
+            "type": "string"
+          },
+          "partner_user_secret": {
+            "default": "",
+            "description": "Your Expensify Integration Server partnerUserSecret.",
+            "title": "Partner User Secret",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "description": "Optional friendly label for this connection, e.g. 'Acme Inc Expensify'.",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ConnectExpensifyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ProviderConnection",
+        "type": "object"
+      },
+      "event": "expensify-connector.connect_expensify",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "list_connections",
+      "description": "List the connected Expensify accounts.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Explicit empty params model -- V17 disallows untyped handlers.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ProviderConnection": {
+            "properties": {
+              "id": {
+                "default": "",
+                "title": "Id",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "title": "ProviderConnection",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/$defs/ProviderConnection"
+            },
+            "title": "Connections",
+            "type": "array"
+          }
+        },
+        "title": "ProviderConnectionList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "disconnect_expensify",
+      "description": "Disconnect an Expensify account: deletes the saved partnerUserID/partnerUserSecret pair. Nothing in Expensify itself is changed.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "delete:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "description": "Which connection to disconnect (see list_connections).",
+            "title": "Connection Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connection_id"
+        ],
+        "title": "DisconnectExpensifyParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "deleted": {
+            "default": false,
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "DeleteResult",
+        "type": "object"
+      },
+      "event": "expensify-connector.disconnect_expensify",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "list_policies",
+      "description": "List Expensify policies (workspaces) the connected account can access, with your role on each.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          }
+        },
+        "title": "ListPoliciesParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "PolicySummary": {
+            "properties": {
+              "policy_id": {
+                "default": "",
+                "title": "Policy Id",
+                "type": "string"
+              },
+              "name": {
+                "default": "",
+                "title": "Name",
+                "type": "string"
+              },
+              "role": {
+                "default": "",
+                "title": "Role",
+                "type": "string"
+              }
+            },
+            "title": "PolicySummary",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "policies": {
+            "items": {
+              "$ref": "#/$defs/PolicySummary"
+            },
+            "title": "Policies",
+            "type": "array"
+          }
+        },
+        "title": "PolicyList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "list_policy_employees",
+      "description": "List the employees (policy members) on one Expensify policy, with their role and approval chain.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "description": "The Expensify policy id (see list_policies).",
+            "title": "Policy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id"
+        ],
+        "title": "GetPolicyEmployeesParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "PolicyEmployee": {
+            "properties": {
+              "email": {
+                "default": "",
+                "title": "Email",
+                "type": "string"
+              },
+              "role": {
+                "default": "",
+                "title": "Role",
+                "type": "string"
+              },
+              "forwards_to": {
+                "default": "",
+                "title": "Forwards To",
+                "type": "string"
+              }
+            },
+            "title": "PolicyEmployee",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "policy_id": {
+            "default": "",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "employees": {
+            "items": {
+              "$ref": "#/$defs/PolicyEmployee"
+            },
+            "title": "Employees",
+            "type": "array"
+          }
+        },
+        "title": "PolicyEmployeeList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "update_policy_employee",
+      "description": "Update an existing employee's role on an Expensify policy (e.g. promote to admin/approver).",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:policy_employee"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "description": "The Expensify policy id.",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "email": {
+            "description": "The employee's email address.",
+            "title": "Email",
+            "type": "string"
+          },
+          "role": {
+            "default": "",
+            "description": "New role, e.g. 'employee', 'admin', 'approver'. Leave empty to keep unchanged.",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "email"
+        ],
+        "title": "UpdatePolicyEmployeeParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "updated": {
+            "default": false,
+            "title": "Updated",
+            "type": "boolean"
+          }
+        },
+        "title": "UpdateResult",
+        "type": "object"
+      },
+      "event": "expensify-connector.update_policy_employee",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "list_reports",
+      "description": "List expense reports on the connected Expensify account, optionally filtered to one policy.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "default": "",
+            "description": "Optional: only reports on this policy.",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "ListReportsParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ReportSummary": {
+            "properties": {
+              "report_id": {
+                "default": "",
+                "title": "Report Id",
+                "type": "string"
+              },
+              "report_name": {
+                "default": "",
+                "title": "Report Name",
+                "type": "string"
+              },
+              "total": {
+                "default": 0.0,
+                "title": "Total",
+                "type": "number"
+              },
+              "currency": {
+                "default": "",
+                "title": "Currency",
+                "type": "string"
+              },
+              "state": {
+                "default": "",
+                "title": "State",
+                "type": "string"
+              },
+              "submitter_email": {
+                "default": "",
+                "title": "Submitter Email",
+                "type": "string"
+              }
+            },
+            "title": "ReportSummary",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "reports": {
+            "items": {
+              "$ref": "#/$defs/ReportSummary"
+            },
+            "title": "Reports",
+            "type": "array"
+          }
+        },
+        "title": "ReportList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "get_report",
+      "description": "Read one Expensify expense report in full by its report id.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "report_id": {
+            "description": "The Expensify report id.",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id"
+        ],
+        "title": "GetReportParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "report_id": {
+            "default": "",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          }
+        },
+        "title": "ReportDetail",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "get_spend_overview_report",
+      "description": "Value-add report: one-glance spend overview for the connected Expensify account -- total report count, total spend, and a breakdown by report state (open/submitted/approved/reimbursed).",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "default": "",
+            "description": "Optional: only reports on this policy.",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "ListReportsParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "total_reports": {
+            "default": 0,
+            "title": "Total Reports",
+            "type": "integer"
+          },
+          "total_spend": {
+            "default": 0.0,
+            "title": "Total Spend",
+            "type": "number"
+          },
+          "by_state": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By State",
+            "type": "object"
+          }
+        },
+        "title": "SpendOverviewReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    },
+    {
+      "name": "get_pending_approvals_report",
+      "description": "Value-add report: list expense reports currently awaiting your approval on the connected Expensify account.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Expensify account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "default": "",
+            "description": "Optional: only reports on this policy.",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "ListReportsParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ReportSummary": {
+            "properties": {
+              "report_id": {
+                "default": "",
+                "title": "Report Id",
+                "type": "string"
+              },
+              "report_name": {
+                "default": "",
+                "title": "Report Name",
+                "type": "string"
+              },
+              "total": {
+                "default": 0.0,
+                "title": "Total",
+                "type": "number"
+              },
+              "currency": {
+                "default": "",
+                "title": "Currency",
+                "type": "string"
+              },
+              "state": {
+                "default": "",
+                "title": "State",
+                "type": "string"
+              },
+              "submitter_email": {
+                "default": "",
+                "title": "Submitter Email",
+                "type": "string"
+              }
+            },
+            "title": "ReportSummary",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/$defs/ReportSummary"
+            },
+            "title": "Reports",
+            "type": "array"
+          }
+        },
+        "title": "PendingApprovalsReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "expensify"
+    }
+  ],
+  "signals": [],
+  "schedules": [],
+  "required_scopes": [],
+  "icon_size_bytes": 677,
+  "lifecycle": {
+    "health_check": {
+      "interval_sec": 60
+    }
+  },
+  "secrets": [
+    {
+      "name": "expensify_connections",
+      "description": "JSON array of saved Expensify connections (partnerUserID/Secret, label).",
+      "required": false,
+      "write_mode": "extension",
+      "max_bytes": 65536,
+      "scope": "user",
+      "rotation_hint_days": 365
+    }
+  ],
+  "panels": [
+    {
+      "panel_id": "secrets",
+      "slot": "right",
+      "title": "Secrets",
+      "tree": {},
+      "icon": "KeyRound",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "expensify_connect",
+      "slot": "left",
+      "title": "Expensify",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "expensify_connect_help",
+      "slot": "overlay",
+      "title": "How do I set this up?",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "expensify_settings",
+      "slot": "center",
+      "title": "",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    }
+  ]
+}
