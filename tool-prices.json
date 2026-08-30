@@ -1,0 +1,12 @@
+{
+  "connect_expensify": 0,
+  "disconnect_expensify": 0,
+  "list_connections": 0,
+  "list_policies": 8,
+  "list_policy_employees": 8,
+  "list_reports": 8,
+  "get_report": 8,
+  "update_policy_employee": 16,
+  "get_spend_overview_report": 20,
+  "get_pending_approvals_report": 40
+}
