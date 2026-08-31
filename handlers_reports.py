@@ -39,7 +39,7 @@ async def list_reports(ctx, params: ListReportsParams) -> ActionResult:
         input_settings["policyIDList"] = params.policy_id
     data = await ec.request(ctx, conn, "get", input_settings, action="list reports")
     rows = data if isinstance(data, list) else []
-    return ActionResult.ok(ReportList(reports=[_to_summary(r) for r in rows]))
+    return ActionResult.success(ReportList(reports=[_to_summary(r) for r in rows]), summary="Reports listed.")
 
 
 @chat.function(
@@ -55,7 +55,7 @@ async def get_report(ctx, params: GetReportParams) -> ActionResult:
     data = await ec.request(
         ctx, conn, "get", {"type": "report", "reportID": params.report_id}, action="get report",
     )
-    return ActionResult.ok(ReportDetail(report_id=params.report_id, data=data if isinstance(data, dict) else {}))
+    return ActionResult.success(ReportDetail(report_id=params.report_id, data=data if isinstance(data, dict) else {}), summary="Report retrieved.")
 
 
 @chat.function(
@@ -80,7 +80,7 @@ async def get_spend_overview_report(ctx, params: ListReportsParams) -> ActionRes
         state = r.get("state", "unknown")
         by_state[state] = by_state.get(state, 0) + 1
         total_spend += float(r.get("total", 0) or 0)
-    return ActionResult.ok(SpendOverviewReport(total_reports=len(rows), total_spend=total_spend, by_state=by_state))
+    return ActionResult.success(SpendOverviewReport(total_reports=len(rows), total_spend=total_spend, by_state=by_state), summary="Spend overview report retrieved.")
 
 
 @chat.function(
@@ -100,4 +100,4 @@ async def get_pending_approvals_report(ctx, params: ListReportsParams) -> Action
     data = await ec.request(ctx, conn, "get", input_settings, action="list reports for pending approvals")
     rows = data if isinstance(data, list) else []
     pending = [_to_summary(r) for r in rows if r.get("state") in ("SUBMITTED", "PROCESSING")]
-    return ActionResult.ok(PendingApprovalsReport(count=len(pending), reports=pending))
+    return ActionResult.success(PendingApprovalsReport(count=len(pending), reports=pending), summary="Pending approvals report retrieved.")

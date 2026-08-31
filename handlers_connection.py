@@ -87,7 +87,7 @@ async def connect_expensify(ctx, params: ConnectExpensifyParams) -> ActionResult
         "partner_user_secret": params.partner_user_secret,
     })
     await _save_connections(ctx, connections)
-    return ActionResult.ok(ProviderConnection(id=conn_id, label=params.label or "Expensify"))
+    return ActionResult.success(ProviderConnection(id=conn_id, label=params.label or "Expensify"), summary="Expensify connected.")
 
 
 @chat.function(
@@ -99,7 +99,7 @@ async def list_connections(ctx, params: NoParams) -> ActionResult:
     """List the connected Expensify accounts."""
     connections = await _load_connections(ctx)
     items = [ProviderConnection(id=c.get("id", ""), label=c.get("label", "")) for c in connections]
-    return ActionResult.ok(ProviderConnectionList(connections=items))
+    return ActionResult.success(ProviderConnectionList(connections=items), summary="Connections listed.")
 
 
 @chat.function(
@@ -116,4 +116,4 @@ async def disconnect_expensify(ctx, params: DisconnectExpensifyParams) -> Action
     if len(remaining) == len(connections):
         return ActionResult.error("Connection not found.", code="EXPENSIFY_NOT_CONNECTED")
     await _save_connections(ctx, remaining)
-    return ActionResult.ok(DeleteResult(deleted=True, id=params.connection_id))
+    return ActionResult.success(DeleteResult(deleted=True, id=params.connection_id), summary="Expensify disconnected.")

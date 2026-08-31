@@ -33,7 +33,7 @@ async def list_policies(ctx, params: ListPoliciesParams) -> ActionResult:
         PolicySummary(policy_id=r.get("policyID", ""), name=r.get("name", ""), role=r.get("role", ""))
         for r in rows
     ]
-    return ActionResult.ok(PolicyList(policies=policies))
+    return ActionResult.success(PolicyList(policies=policies), summary="Policies listed.")
 
 
 @chat.function(
@@ -56,7 +56,7 @@ async def list_policy_employees(ctx, params: GetPolicyEmployeesParams) -> Action
         PolicyEmployee(email=r.get("email", ""), role=r.get("role", ""), forwards_to=r.get("forwardsTo", ""))
         for r in rows
     ]
-    return ActionResult.ok(PolicyEmployeeList(policy_id=params.policy_id, employees=employees))
+    return ActionResult.success(PolicyEmployeeList(policy_id=params.policy_id, employees=employees), summary="Policy employees listed.")
 
 
 @chat.function(
@@ -76,4 +76,4 @@ async def update_policy_employee(ctx, params: UpdatePolicyEmployeeParams) -> Act
         {"type": "policy", "policyID": params.policy_id, "employees": employees},
         action="update policy employee",
     )
-    return ActionResult.ok(UpdateResult(updated=True))
+    return ActionResult.success(UpdateResult(updated=True), summary="Policy employee updated.")
